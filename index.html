@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador - Athena Assessoria</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --color-primary: #c6ac7c;
+      --color-primary-dark: #b09565;
+      --color-text: #2d2c2d;
+      --color-text-light: #666;
+      --color-bg: #ffffff;
+      --color-bg-alt: #f8f9fa;
+      --color-error: #e74c3c;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --font-main: "Montserrat", sans-serif;
+      --transition: all 0.3s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--color-bg-alt);
+      color: var(--color-text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .simulator-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 40px auto;
+      background: var(--color-bg);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+      min-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 24px;
+      text-align: center;
+      background-color: var(--color-text);
+      border-bottom: 2px solid var(--color-primary);
+    }
+
+    .progress-container { height: 4px; background: #eee; width: 100%; }
+    .progress-bar {
+      height: 100%;
+      background: var(--color-primary);
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    .step-content {
+      padding: 40px;
+      flex: 1;
+      display: none;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    .step-content.active { display: block; }
+
+    .step-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      text-align: center;
+      color: var(--color-text);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .card {
+      background: white;
+      border: 1px solid #eee;
+      border-radius: var(--radius-sm);
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-primary);
+    }
+
+    .card-icon { font-size: 40px; margin-bottom: 16px; color: var(--color-primary); }
+    .card h3 { font-size: 18px; font-weight: 500; }
+
+    .form-group { margin-bottom: 20px; text-align: left; }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--color-text-light);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: var(--radius-sm);
+      font-size: 16px;
+      font-family: var(--font-main);
+      transition: var(--transition);
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(198, 172, 124, 0.2);
+    }
+
+    .helper-text {
+      color: #999;
+      display: block;
+      margin-top: 6px;
+      font-size: 12px;
+    }
+
+    /* Prefixo/sufixo VISUAL: não altera o value (evita briga com scripts do GreatPages) */
+    .currency-input { position: relative; }
+    .currency-input .currency-prefix {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      font-weight: 600;
+      pointer-events: none;
+      font-size: 14px;
+    }
+    .currency-input .currency-suffix {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      font-weight: 600;
+      pointer-events: none;
+      font-size: 14px;
+    }
+    .currency-input input {
+      padding-left: 46px;
+      padding-right: 46px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 32px;
+      gap: 16px;
+    }
+
+    .btn {
+      background: var(--color-primary);
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: var(--transition);
+      flex: 1;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(198, 172, 124, 0.3);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid #ddd;
+      color: var(--color-text-light);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--color-text);
+      color: var(--color-text);
+      background: transparent;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .result-message { text-align: center; padding: 40px 20px; }
+    .icon-large { font-size: 64px; margin-bottom: 24px; }
+    .result-message h2 { margin-bottom: 16px; }
+    .result-message p { color: var(--color-text-light); margin-bottom: 32px; }
+
+    @media (max-width: 768px) {
+      .simulator-container {
+        margin: 0;
+        border-radius: 0;
+        min-height: 100vh;
+        box-shadow: none;
+      }
+      .step-content { padding: 24px 20px; }
+      .grid-2 { grid-template-columns: 1fr; gap: 0; }
+      .card { padding: 24px; }
+    }
+
+    .slider-container { margin: 20px 0; }
+
+    .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: #eee;
+      outline: none;
+      transition: background 0.2s;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      cursor: pointer;
+      box-shadow: 0 0 0 4px rgba(198, 172, 124, 0.2);
+      transition: transform 0.1s;
+      margin-top: -9px;
+    }
+
+    .slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
+
+    .slider::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      cursor: pointer;
+      background: #eee;
+      border-radius: 4px;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 50%;
+      background: var(--color-primary);
+      cursor: pointer;
+      box-shadow: 0 0 0 4px rgba(198, 172, 124, 0.2);
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--color-text-light);
+      margin-top: 8px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="simulator-container">
+    <header>
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </header>
+
+    <main id="simulatorMain">
+      <!-- Step 1 -->
+      <div class="step-content active" id="step1">
+        <h2 class="step-title">Qual é o seu objetivo?</h2>
+        <div class="cards-grid">
+          <div class="card" onclick="selectObjective('adquirir')">
+            <div class="card-icon">🏠</div>
+            <h3>Quero adquirir um imóvel</h3>
+          </div>
+          <div class="card" onclick="selectObjective('credito')">
+            <div class="card-icon">💰</div>
+            <h3>Quero um crédito usando meu imóvel</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-content" id="step2">
+        <h2 class="step-title">Qual o perfil do imóvel?</h2>
+        <div class="cards-grid">
+          <div class="card" onclick="selectProperty('casa')">
+            <div class="card-icon">🏡</div>
+            <h3>Casa</h3>
+          </div>
+          <div class="card" onclick="selectProperty('apartamento')">
+            <div class="card-icon">🏢</div>
+            <h3>Apartamento</h3>
+          </div>
+          <div class="card" onclick="selectProperty('comercial')">
+            <div class="card-icon">🏬</div>
+            <h3>Sala Comercial</h3>
+          </div>
+          <div class="card" onclick="selectProperty('outros')">
+            <div class="card-icon">❓</div>
+            <h3>Outros</h3>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevStep()">Voltar</button>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-content" id="step3">
+        <h2 class="step-title">Quais os valores da operação?</h2>
+
+        <div class="form-group">
+          <label>Valor aproximado do imóvel</label>
+
+          <div class="currency-input">
+            <span class="currency-prefix">R$</span>
+
+            <!-- VISÍVEL: recebe máscara com pontos (milhar) -->
+            <input
+              type="text"
+              id="propertyValue"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="0"
+            />
+
+            <span class="currency-suffix">,00</span>
+
+            <!-- OCULTO: guarda somente dígitos (fonte de verdade para cálculos) -->
+            <input type="hidden" id="propertyValueRaw" value="" />
+          </div>
+
+          <small class="helper-text" id="propertyHelper">
+            Digite o valor para habilitar a simulação de crédito.
+          </small>
+        </div>
+
+        <div id="creditSection" style="display: none; opacity: 0; transition: opacity 0.5s ease;">
+          <div class="form-group">
+            <label>Valor do empréstimo</label>
+
+            <div class="slider-container">
+              <input type="range" id="creditSlider" min="100000" step="1000" class="slider">
+              <div class="slider-labels">
+                <span id="sliderMin">R$ 100.000,00</span>
+                <span id="sliderMax">R$ 0,00</span>
+              </div>
+            </div>
+
+            <input
+              type="text"
+              id="creditValue"
+              placeholder="R$ 0,00"
+              readonly
+              style="margin-top: 16px; font-weight: bold; color: var(--color-primary);"
+            >
+          </div>
+        </div>
+
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevStep()">Voltar</button>
+          <button class="btn" onclick="validateStep3()">Continuar</button>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step-content" id="step4">
+        <h2 class="step-title">O imóvel tem matrícula / escritura?</h2>
+        <div class="cards-grid">
+          <div class="card" onclick="selectLegal('sim')">
+            <div class="card-icon">✅</div>
+            <h3>Sim, possui matrícula/escritura</h3>
+          </div>
+          <div class="card" onclick="selectLegal('nao')">
+            <div class="card-icon">❌</div>
+            <h3>Não possui</h3>
+          </div>
+        </div>
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevStep()">Voltar</button>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step-content" id="step5">
+        <h2 class="step-title">Preencha seus dados para receber a simulação</h2>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Nome Completo</label>
+            <input type="text" id="clientName">
+          </div>
+          <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="clientCPF" placeholder="000.000.000-00">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Renda Familiar Mensal</label>
+            <div class="currency-input">
+              <span class="currency-prefix">R$</span>
+              <input type="text" id="clientIncome" inputmode="numeric" autocomplete="off" placeholder="0">
+              <span class="currency-suffix">,00</span>
+              <input type="hidden" id="clientIncomeRaw" value="" />
+            </div>
+            <small class="helper-text" id="incomeHelper">Digite o valor da renda.</small>
+          </div>
+
+          <div class="form-group">
+            <label>Telefone (WhatsApp)</label>
+            <input type="text" id="clientPhone" placeholder="(00) 00000-0000">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Data de Nascimento</label>
+            <input type="text" id="clientDob" placeholder="DD/MM/AAAA">
+          </div>
+          <div class="form-group">
+            <label>CEP</label>
+            <input type="text" id="clientCep" placeholder="00000-000">
+          </div>
+        </div>
+
+        <div class="nav-buttons">
+          <button class="btn btn-outline" onclick="prevStep()">Voltar</button>
+          <button class="btn" onclick="submitForm()">Solicitar Simulação</button>
+        </div>
+      </div>
+
+      <!-- Disqualified View -->
+      <div class="step-content" id="stepDisqualified">
+        <div class="result-message">
+          <div class="icon-large">⚠️</div>
+          <h2>Obrigado pelo interesse</h2>
+          <p>No momento, não atendemos este perfil de imóvel ("Outros"). Agradecemos sua compreensão.</p>
+          <button class="btn btn-outline" onclick="location.reload()">Início</button>
+        </div>
+      </div>
+
+      <!-- Success View -->
+      <div class="step-content" id="stepSuccess">
+        <div class="result-message">
+          <div class="icon-large" style="color: var(--color-primary)">✨</div>
+          <h2 style="color: var(--color-primary)">Recebemos seus dados!</h2>
+          <p>Um de nossos especialistas da <strong>Athena Assessoria</strong> entrará em contato em breve com sua simulação personalizada.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const simulatorData = {
+      objective: null,
+      propertyType: null,
+      propertyValue: '',
+      creditValue: '',
+      hasLegalDoc: null,
+      clientData: {}
+    };
+
+    let currentStep = 1;
+    const TOTAL_STEPS = 5;
+
+    function updateProgress() {
+      const percentage = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+      const bar = document.getElementById('progressBar');
+      if (bar) bar.style.width = `${Math.min(percentage, 100)}%`;
+    }
+
+    function showStep(stepId) {
+      document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+      const stepEl = document.getElementById(stepId);
+      if (stepEl) stepEl.classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    function nextStep() {
+      if (currentStep < TOTAL_STEPS) {
+        currentStep++;
+        updateProgress();
+        showStep(`step${currentStep}`);
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateProgress();
+        showStep(`step${currentStep}`);
+      }
+    }
+
+    function selectObjective(type) { simulatorData.objective = type; nextStep(); }
+    function selectProperty(type) { simulatorData.propertyType = type; nextStep(); }
+    function selectLegal(value) { simulatorData.hasLegalDoc = value; nextStep(); }
+
+    function formatBRLFromNumber(n) {
+      const num = Number(n);
+      if (!isFinite(num) || num <= 0) return 'R$ 0,00';
+      return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ---------- MÁSCARA PROFISSIONAL (com cursor estável) ----------
+    function onlyDigits(str) {
+      return (str || '').replace(/\D/g, '');
+    }
+
+    function formatThousands(digits) {
+      if (!digits) return '';
+      const clean = digits.replace(/^0+(?=\d)/, '');
+      return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function countDigits(str) {
+      let c = 0;
+      for (let i = 0; i < (str || '').length; i++) if (/\d/.test(str[i])) c++;
+      return c;
+    }
+
+    function caretFromDigitIndex(formatted, digitIndex) {
+      if (!formatted) return 0;
+      let digitsSeen = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) digitsSeen++;
+        if (digitsSeen >= digitIndex) return i + 1;
+      }
+      return formatted.length;
+    }
+
+    // Aplica format no "último write wins" (rAF + setTimeout) pra vencer scripts do GreatPages
+    function applyMaskedValue(input, formatted, digitIndex) {
+      const pos = caretFromDigitIndex(formatted, digitIndex);
+      const write = () => {
+        input.value = formatted;
+        try { input.setSelectionRange(pos, pos); } catch (_) {}
+      };
+      requestAnimationFrame(write);
+      setTimeout(write, 0);
+    }
+    // --------------------------------------------------------------
+
+    function updateCreditDisplay(val) {
+      const display = document.getElementById('creditValue');
+      if (!display) return;
+      display.value = formatBRLFromNumber(val);
+      simulatorData.creditValue = display.value;
+    }
+
+    let hideTimeout;
+
+    function handlePropertyInput(e) {
+      const input = e.target;
+      const rawHidden = document.getElementById('propertyValueRaw');
+
+      const oldValue = input.value || '';
+      const caret = input.selectionStart ?? oldValue.length;
+      const digitIndex = countDigits(oldValue.slice(0, caret));
+
+      const digits = onlyDigits(oldValue);
+      if (rawHidden) rawHidden.value = digits;
+
+      const formatted = formatThousands(digits);
+      if (oldValue !== formatted) applyMaskedValue(input, formatted, digitIndex);
+
+      const helper = document.getElementById('propertyHelper');
+      const creditSection = document.getElementById('creditSection');
+
+      if (!digits) {
+        if (helper) {
+          helper.textContent = 'Digite o valor para habilitar a simulação de crédito.';
+          helper.style.color = '#999';
+        }
+        if (creditSection) {
+          creditSection.style.opacity = '0';
+          setTimeout(() => { creditSection.style.display = 'none'; }, 300);
+        }
+        return;
+      }
+
+      const rawValue = parseInt(digits, 10);
+      if (!isFinite(rawValue)) return;
+
+      if (hideTimeout) clearTimeout(hideTimeout);
+
+      if (rawValue < 300000) {
+        if (helper) {
+          helper.textContent = 'O valor mínimo do imóvel deve ser R$ 300.000,00';
+          helper.style.color = 'var(--color-error)';
+        }
+        if (creditSection) {
+          creditSection.style.opacity = '0';
+          hideTimeout = setTimeout(() => { creditSection.style.display = 'none'; }, 300);
+        }
+        return;
+      } else {
+        if (helper) {
+          helper.textContent = 'Valor do imóvel válido. Prossiga com a simulação.';
+          helper.style.color = 'green';
+        }
+      }
+
+      if (creditSection) {
+        creditSection.style.display = 'block';
+        setTimeout(() => { creditSection.style.opacity = '1'; }, 10);
+      }
+
+      const minCredit = 100000;
+      const maxCredit = Math.floor(rawValue * 0.60);
+
+      const slider = document.getElementById('creditSlider');
+      if (slider) {
+        slider.min = String(minCredit);
+        slider.max = String(maxCredit);
+
+        let current = parseInt(slider.value || String(minCredit), 10);
+        if (!isFinite(current)) current = minCredit;
+        if (current < minCredit) current = minCredit;
+        if (current > maxCredit) current = maxCredit;
+
+        slider.value = String(current);
+
+        const sliderMinLabel = document.getElementById('sliderMin');
+        const sliderMaxLabel = document.getElementById('sliderMax');
+
+        if (sliderMinLabel) sliderMinLabel.textContent = formatBRLFromNumber(minCredit);
+        if (sliderMaxLabel) sliderMaxLabel.textContent = formatBRLFromNumber(maxCredit);
+
+        updateCreditDisplay(slider.value);
+      }
+    }
+
+    function handleIncomeInput(e) {
+      const input = e.target;
+      const rawHidden = document.getElementById('clientIncomeRaw');
+
+      const oldValue = input.value || '';
+      const caret = input.selectionStart ?? oldValue.length;
+      const digitIndex = countDigits(oldValue.slice(0, caret));
+
+      const digits = onlyDigits(oldValue);
+      if (rawHidden) rawHidden.value = digits;
+
+      const formatted = formatThousands(digits);
+      if (oldValue !== formatted) applyMaskedValue(input, formatted, digitIndex);
+    }
+
+    function validateStep3() {
+      const digits = document.getElementById('propertyValueRaw')?.value || '';
+      const rawValue = digits ? parseInt(digits, 10) : 0;
+
+      const cVal = document.getElementById('creditValue')?.value || '';
+      if (!rawValue || rawValue < 300000 || !cVal) {
+        alert("Por favor, preencha o valor do imóvel (mínimo R$ 300.000,00) e selecione o crédito.");
+        return;
+      }
+
+      simulatorData.propertyValue = formatBRLFromNumber(rawValue);
+      simulatorData.creditValue = cVal;
+      nextStep();
+    }
+
+    function submitForm() {
+      const fields = ['clientName', 'clientCPF', 'clientIncome', 'clientPhone', 'clientDob', 'clientCep'];
+      let valid = true;
+
+      fields.forEach(f => {
+        const val = document.getElementById(f)?.value || '';
+        if (!val) valid = false;
+
+        if (f === 'clientIncome') {
+          const digits = document.getElementById('clientIncomeRaw')?.value || val.replace(/\D/g, '');
+          simulatorData.clientData[f] = formatBRLFromNumber(digits ? parseInt(digits, 10) : 0);
+        } else {
+          simulatorData.clientData[f] = val;
+        }
+      });
+
+      if (!valid) {
+        alert("Por favor, preencha todos os campos.");
+        return;
+      }
+
+      console.log("Lead Data Captured:", simulatorData);
+      showStep('stepSuccess');
+      document.getElementById('progressBar').style.width = '100%';
+    }
+
+    // Máscaras auxiliares
+    function maskCPF(input) {
+      let v = (input.value || '').replace(/\D/g, '');
+      v = v.replace(/(\d{3})(\d)/, '$1.$2');
+      v = v.replace(/(\d{3})(\d)/, '$1.$2');
+      v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      input.value = v.slice(0, 14);
+    }
+
+    function maskPhone(input) {
+      let v = (input.value || '').replace(/\D/g, '');
+      v = v.replace(/^(\d{2})(\d)/g, '($1) $2');
+      v = v.replace(/(\d{5})(\d)/, '$1-$2');
+      input.value = v.slice(0, 15);
+    }
+
+    function maskDate(input) {
+      let v = (input.value || '').replace(/\D/g, '');
+      v = v.replace(/(\d{2})(\d)/, '$1/$2');
+      v = v.replace(/(\d{2})(\d)/, '$1/$2');
+      input.value = v.slice(0, 10);
+    }
+
+    function maskCEP(input) {
+      let v = (input.value || '').replace(/\D/g, '');
+      v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+      input.value = v.slice(0, 9);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateProgress();
+
+      const propertyInput = document.getElementById('propertyValue');
+      if (propertyInput) propertyInput.addEventListener('input', handlePropertyInput);
+
+      const slider = document.getElementById('creditSlider');
+      if (slider) slider.addEventListener('input', (e) => updateCreditDisplay(e.target.value));
+
+      const income = document.getElementById('clientIncome');
+      if (income) income.addEventListener('input', handleIncomeInput);
+
+      const cpf = document.getElementById('clientCPF');
+      if (cpf) cpf.addEventListener('input', () => maskCPF(cpf));
+
+      const phone = document.getElementById('clientPhone');
+      if (phone) phone.addEventListener('input', () => maskPhone(phone));
+
+      const dob = document.getElementById('clientDob');
+      if (dob) dob.addEventListener('input', () => maskDate(dob));
+
+      const cep = document.getElementById('clientCep');
+      if (cep) cep.addEventListener('input', () => maskCEP(cep));
+    });
+  </script>
+</body>
+</html>
