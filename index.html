@@ -155,7 +155,7 @@
       font-size: 12px;
     }
 
-    /* Prefixo/sufixo VISUAL: não altera o value (evita briga com scripts do GreatPages) */
+    /* Prefixo "R$" VISUAL */
     .currency-input { position: relative; }
     .currency-input .currency-prefix {
       position: absolute;
@@ -165,22 +165,8 @@
       color: #999;
       font-weight: 600;
       pointer-events: none;
-      font-size: 14px;
     }
-    .currency-input .currency-suffix {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #999;
-      font-weight: 600;
-      pointer-events: none;
-      font-size: 14px;
-    }
-    .currency-input input {
-      padding-left: 46px;
-      padding-right: 46px;
-    }
+    .currency-input input { padding-left: 46px; }
 
     .nav-buttons {
       display: flex;
@@ -239,6 +225,7 @@
       .card { padding: 24px; }
     }
 
+    /* Slider Styling */
     .slider-container { margin: 20px 0; }
 
     .slider {
@@ -248,7 +235,6 @@
       border-radius: 4px;
       background: #eee;
       outline: none;
-      transition: background 0.2s;
     }
 
     .slider::-webkit-slider-thumb {
@@ -260,11 +246,8 @@
       background: var(--color-primary);
       cursor: pointer;
       box-shadow: 0 0 0 4px rgba(198, 172, 124, 0.2);
-      transition: transform 0.1s;
       margin-top: -9px;
     }
-
-    .slider::-webkit-slider-thumb:hover { transform: scale(1.1); }
 
     .slider::-webkit-slider-runnable-track {
       width: 100%;
@@ -304,6 +287,7 @@
     </header>
 
     <main id="simulatorMain">
+
       <!-- Step 1 -->
       <div class="step-content active" id="step1">
         <h2 class="step-title">Qual é o seu objetivo?</h2>
@@ -352,22 +336,16 @@
         <div class="form-group">
           <label>Valor aproximado do imóvel</label>
 
+          <!-- Agora o próprio input mostra 300.000,00 enquanto digita -->
           <div class="currency-input">
             <span class="currency-prefix">R$</span>
-
-            <!-- VISÍVEL: recebe máscara com pontos (milhar) -->
             <input
               type="text"
               id="propertyValue"
               inputmode="numeric"
               autocomplete="off"
-              placeholder="0"
+              placeholder="0,00"
             />
-
-            <span class="currency-suffix">,00</span>
-
-            <!-- OCULTO: guarda somente dígitos (fonte de verdade para cálculos) -->
-            <input type="hidden" id="propertyValueRaw" value="" />
           </div>
 
           <small class="helper-text" id="propertyHelper">
@@ -375,7 +353,7 @@
           </small>
         </div>
 
-        <div id="creditSection" style="display: none; opacity: 0; transition: opacity 0.5s ease;">
+        <div id="creditSection" style="display: none; opacity: 0; transition: opacity 0.35s ease;">
           <div class="form-group">
             <label>Valor do empréstimo</label>
 
@@ -441,11 +419,9 @@
             <label>Renda Familiar Mensal</label>
             <div class="currency-input">
               <span class="currency-prefix">R$</span>
-              <input type="text" id="clientIncome" inputmode="numeric" autocomplete="off" placeholder="0">
-              <span class="currency-suffix">,00</span>
-              <input type="hidden" id="clientIncomeRaw" value="" />
+              <input type="text" id="clientIncome" inputmode="numeric" autocomplete="off" placeholder="0,00">
             </div>
-            <small class="helper-text" id="incomeHelper">Digite o valor da renda.</small>
+            <small class="helper-text">Digite o valor. A máscara acontece no próprio campo.</small>
           </div>
 
           <div class="form-group">
@@ -471,16 +447,6 @@
         </div>
       </div>
 
-      <!-- Disqualified View -->
-      <div class="step-content" id="stepDisqualified">
-        <div class="result-message">
-          <div class="icon-large">⚠️</div>
-          <h2>Obrigado pelo interesse</h2>
-          <p>No momento, não atendemos este perfil de imóvel ("Outros"). Agradecemos sua compreensão.</p>
-          <button class="btn btn-outline" onclick="location.reload()">Início</button>
-        </div>
-      </div>
-
       <!-- Success View -->
       <div class="step-content" id="stepSuccess">
         <div class="result-message">
@@ -489,6 +455,7 @@
           <p>Um de nossos especialistas da <strong>Athena Assessoria</strong> entrará em contato em breve com sua simulação personalizada.</p>
         </div>
       </div>
+
     </main>
   </div>
 
@@ -504,7 +471,51 @@
 
     let currentStep = 1;
     const TOTAL_STEPS = 5;
+    let hideTimeout = null;
 
+    // ---------- helpers ----------
+    function formatBRL(n) {
+      const num = Number(n);
+      if (!isFinite(num) || num <= 0) return 'R$ 0,00';
+      return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // máscara: usuário digita só REAIS; campo sempre mostra "xxx.xxx,00"
+    // cursor fica sempre ANTES da vírgula (junto do número)
+    function maskReaisFixedCents(inputEl) {
+      const digits = (inputEl.value || '').replace(/\D/g, ''); // só dígitos
+      if (!digits) {
+        inputEl.value = '';
+        return 0;
+      }
+
+      const raw = parseInt(digits, 10);
+      if (!isFinite(raw)) {
+        inputEl.value = '';
+        return 0;
+      }
+
+      const intPart = raw.toLocaleString('pt-BR'); // 300000 -> 300.000
+      inputEl.value = intPart + ',00';
+
+      // cursor sempre antes da vírgula
+      const caretPos = intPart.length;
+      requestAnimationFrame(() => {
+        try { inputEl.setSelectionRange(caretPos, caretPos); } catch (_) {}
+      });
+
+      return raw;
+    }
+
+    function getRawReaisFromMasked(inputEl) {
+      const v = (inputEl.value || '');
+      const digits = v.replace(/\D/g, '');
+      if (!digits) return 0;
+      const raw = parseInt(digits, 10);
+      return isFinite(raw) ? raw : 0;
+    }
+
+    // ---------- navigation ----------
     function updateProgress() {
       const percentage = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
       const bar = document.getElementById('progressBar');
@@ -516,6 +527,14 @@
       const stepEl = document.getElementById(stepId);
       if (stepEl) stepEl.classList.add('active');
       window.scrollTo(0, 0);
+
+      // ajusta altura pro iframe (se você usa postMessage)
+      setTimeout(() => {
+        const h = document.documentElement.scrollHeight;
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ height: h }, "*");
+        }
+      }, 50);
     }
 
     function nextStep() {
@@ -534,95 +553,37 @@
       }
     }
 
+    // ---------- step logic ----------
     function selectObjective(type) { simulatorData.objective = type; nextStep(); }
     function selectProperty(type) { simulatorData.propertyType = type; nextStep(); }
     function selectLegal(value) { simulatorData.hasLegalDoc = value; nextStep(); }
 
-    function formatBRLFromNumber(n) {
-      const num = Number(n);
-      if (!isFinite(num) || num <= 0) return 'R$ 0,00';
-      return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    // ---------- MÁSCARA PROFISSIONAL (com cursor estável) ----------
-    function onlyDigits(str) {
-      return (str || '').replace(/\D/g, '');
-    }
-
-    function formatThousands(digits) {
-      if (!digits) return '';
-      const clean = digits.replace(/^0+(?=\d)/, '');
-      return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    }
-
-    function countDigits(str) {
-      let c = 0;
-      for (let i = 0; i < (str || '').length; i++) if (/\d/.test(str[i])) c++;
-      return c;
-    }
-
-    function caretFromDigitIndex(formatted, digitIndex) {
-      if (!formatted) return 0;
-      let digitsSeen = 0;
-      for (let i = 0; i < formatted.length; i++) {
-        if (/\d/.test(formatted[i])) digitsSeen++;
-        if (digitsSeen >= digitIndex) return i + 1;
-      }
-      return formatted.length;
-    }
-
-    // Aplica format no "último write wins" (rAF + setTimeout) pra vencer scripts do GreatPages
-    function applyMaskedValue(input, formatted, digitIndex) {
-      const pos = caretFromDigitIndex(formatted, digitIndex);
-      const write = () => {
-        input.value = formatted;
-        try { input.setSelectionRange(pos, pos); } catch (_) {}
-      };
-      requestAnimationFrame(write);
-      setTimeout(write, 0);
-    }
-    // --------------------------------------------------------------
-
     function updateCreditDisplay(val) {
       const display = document.getElementById('creditValue');
       if (!display) return;
-      display.value = formatBRLFromNumber(val);
+      display.value = formatBRL(val);
       simulatorData.creditValue = display.value;
     }
 
-    let hideTimeout;
-
-    function handlePropertyInput(e) {
-      const input = e.target;
-      const rawHidden = document.getElementById('propertyValueRaw');
-
-      const oldValue = input.value || '';
-      const caret = input.selectionStart ?? oldValue.length;
-      const digitIndex = countDigits(oldValue.slice(0, caret));
-
-      const digits = onlyDigits(oldValue);
-      if (rawHidden) rawHidden.value = digits;
-
-      const formatted = formatThousands(digits);
-      if (oldValue !== formatted) applyMaskedValue(input, formatted, digitIndex);
-
+    function handlePropertyInput() {
+      const input = document.getElementById('propertyValue');
       const helper = document.getElementById('propertyHelper');
       const creditSection = document.getElementById('creditSection');
+      const slider = document.getElementById('creditSlider');
 
-      if (!digits) {
+      const rawValue = maskReaisFixedCents(input); // <- AQUI a mágica: no próprio input
+
+      if (!rawValue) {
         if (helper) {
           helper.textContent = 'Digite o valor para habilitar a simulação de crédito.';
           helper.style.color = '#999';
         }
         if (creditSection) {
           creditSection.style.opacity = '0';
-          setTimeout(() => { creditSection.style.display = 'none'; }, 300);
+          setTimeout(() => { creditSection.style.display = 'none'; }, 250);
         }
         return;
       }
-
-      const rawValue = parseInt(digits, 10);
-      if (!isFinite(rawValue)) return;
 
       if (hideTimeout) clearTimeout(hideTimeout);
 
@@ -633,14 +594,14 @@
         }
         if (creditSection) {
           creditSection.style.opacity = '0';
-          hideTimeout = setTimeout(() => { creditSection.style.display = 'none'; }, 300);
+          hideTimeout = setTimeout(() => { creditSection.style.display = 'none'; }, 250);
         }
         return;
-      } else {
-        if (helper) {
-          helper.textContent = 'Valor do imóvel válido. Prossiga com a simulação.';
-          helper.style.color = 'green';
-        }
+      }
+
+      if (helper) {
+        helper.textContent = 'Valor do imóvel válido. Prossiga com a simulação.';
+        helper.style.color = 'green';
       }
 
       if (creditSection) {
@@ -651,7 +612,6 @@
       const minCredit = 100000;
       const maxCredit = Math.floor(rawValue * 0.60);
 
-      const slider = document.getElementById('creditSlider');
       if (slider) {
         slider.min = String(minCredit);
         slider.max = String(maxCredit);
@@ -665,40 +625,24 @@
 
         const sliderMinLabel = document.getElementById('sliderMin');
         const sliderMaxLabel = document.getElementById('sliderMax');
-
-        if (sliderMinLabel) sliderMinLabel.textContent = formatBRLFromNumber(minCredit);
-        if (sliderMaxLabel) sliderMaxLabel.textContent = formatBRLFromNumber(maxCredit);
+        if (sliderMinLabel) sliderMinLabel.textContent = formatBRL(minCredit);
+        if (sliderMaxLabel) sliderMaxLabel.textContent = formatBRL(maxCredit);
 
         updateCreditDisplay(slider.value);
       }
     }
 
-    function handleIncomeInput(e) {
-      const input = e.target;
-      const rawHidden = document.getElementById('clientIncomeRaw');
-
-      const oldValue = input.value || '';
-      const caret = input.selectionStart ?? oldValue.length;
-      const digitIndex = countDigits(oldValue.slice(0, caret));
-
-      const digits = onlyDigits(oldValue);
-      if (rawHidden) rawHidden.value = digits;
-
-      const formatted = formatThousands(digits);
-      if (oldValue !== formatted) applyMaskedValue(input, formatted, digitIndex);
-    }
-
     function validateStep3() {
-      const digits = document.getElementById('propertyValueRaw')?.value || '';
-      const rawValue = digits ? parseInt(digits, 10) : 0;
-
+      const input = document.getElementById('propertyValue');
+      const rawValue = getRawReaisFromMasked(input);
       const cVal = document.getElementById('creditValue')?.value || '';
+
       if (!rawValue || rawValue < 300000 || !cVal) {
         alert("Por favor, preencha o valor do imóvel (mínimo R$ 300.000,00) e selecione o crédito.");
         return;
       }
 
-      simulatorData.propertyValue = formatBRLFromNumber(rawValue);
+      simulatorData.propertyValue = formatBRL(rawValue);
       simulatorData.creditValue = cVal;
       nextStep();
     }
@@ -707,15 +651,16 @@
       const fields = ['clientName', 'clientCPF', 'clientIncome', 'clientPhone', 'clientDob', 'clientCep'];
       let valid = true;
 
-      fields.forEach(f => {
-        const val = document.getElementById(f)?.value || '';
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        const val = (el?.value || '').trim();
         if (!val) valid = false;
 
-        if (f === 'clientIncome') {
-          const digits = document.getElementById('clientIncomeRaw')?.value || val.replace(/\D/g, '');
-          simulatorData.clientData[f] = formatBRLFromNumber(digits ? parseInt(digits, 10) : 0);
+        if (id === 'clientIncome') {
+          const raw = getRawReaisFromMasked(el);
+          simulatorData.clientData[id] = formatBRL(raw);
         } else {
-          simulatorData.clientData[f] = val;
+          simulatorData.clientData[id] = val;
         }
       });
 
@@ -727,9 +672,14 @@
       console.log("Lead Data Captured:", simulatorData);
       showStep('stepSuccess');
       document.getElementById('progressBar').style.width = '100%';
+
+      // exemplo de evento pro GTM via postMessage (se quiser)
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ event: "simulation_complete", ...simulatorData }, "*");
+      }
     }
 
-    // Máscaras auxiliares
+    // ---------- masks auxiliares ----------
     function maskCPF(input) {
       let v = (input.value || '').replace(/\D/g, '');
       v = v.replace(/(\d{3})(\d)/, '$1.$2');
@@ -762,13 +712,25 @@
       updateProgress();
 
       const propertyInput = document.getElementById('propertyValue');
-      if (propertyInput) propertyInput.addEventListener('input', handlePropertyInput);
+      if (propertyInput) {
+        propertyInput.addEventListener('input', handlePropertyInput);
+        propertyInput.addEventListener('focus', () => {
+          // garante cursor antes da vírgula ao focar
+          const v = propertyInput.value || '';
+          const commaPos = v.indexOf(',');
+          if (commaPos > 0) {
+            requestAnimationFrame(() => {
+              try { propertyInput.setSelectionRange(commaPos, commaPos); } catch (_) {}
+            });
+          }
+        });
+      }
 
       const slider = document.getElementById('creditSlider');
       if (slider) slider.addEventListener('input', (e) => updateCreditDisplay(e.target.value));
 
       const income = document.getElementById('clientIncome');
-      if (income) income.addEventListener('input', handleIncomeInput);
+      if (income) income.addEventListener('input', () => maskReaisFixedCents(income));
 
       const cpf = document.getElementById('clientCPF');
       if (cpf) cpf.addEventListener('input', () => maskCPF(cpf));
