@@ -4,9 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulador - Athenas Assessoria</title>
+
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-5MJDWDSZ');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
   <style>
     :root {
       --color-primary: #c6ac7c;
@@ -67,6 +74,8 @@
   </style>
 </head>
 <body>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5MJDWDSZ"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="simulator-container">
     <header><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div></header>
     <main id="simulatorMain">
@@ -207,23 +216,17 @@
       const helper = document.getElementById('propertyHelper');
       const slider = document.getElementById('creditSlider');
       const maxLabel = document.getElementById('sliderMax');
-      
       input.classList.remove('input-error');
-
       if (v >= 300000) {
         section.style.display = 'block';
         helper.style.color = 'green';
         helper.innerText = "Valor aceito para simulação.";
-        
         const maxCredit = v * 0.6;
         slider.min = 100000;
         slider.max = maxCredit;
-        
         maxLabel.innerText = formatBRL(maxCredit);
-        
         if (parseFloat(slider.value) < 100000) slider.value = 100000;
         if (parseFloat(slider.value) > maxCredit) slider.value = maxCredit;
-        
         updateSlider(slider.value);
       } else { 
         section.style.display = 'none'; 
@@ -274,8 +277,8 @@
         cep: document.getElementById('clientCep').value
       };
 
+      // 1. DISPARO WEBHOOK (MAKE.COM)
       const webhookURL = 'https://hook.us1.make.com/21rfmrwzxf5h5wmqkj9odgibeyky1ww7';
-
       try {
         fetch(webhookURL, {
           method: 'POST',
@@ -284,7 +287,26 @@
         });
       } catch (e) { console.error(e); }
 
+      // 2. DISPARO GOOGLE TAG MANAGER (DataLayer)
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        'event': 'simulador_athena_complete',
+        'objective': state.objective,
+        'property_type': state.type,
+        'property_value': state.propertyVal,
+        'credit_value': state.creditVal,
+        'has_legal_doc': state.legal,
+        'client_name': state.client.name,
+        'client_phone': state.client.phone,
+        'client_cpf': state.client.cpf,
+        'client_income': state.client.income,
+        'client_dob': state.client.dob,
+        'client_cep': state.client.cep
+      });
+
+      // 3. COMUNICAÇÃO COM PÁGINA PAI (GREATPAGES)
       window.parent.postMessage({ event: 'simulation_complete', ...state }, "*");
+      
       showStep('Success');
     }
 
