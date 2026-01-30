@@ -4,11 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Simulador - Athena Assessoria</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
   <style>
     :root {
       --color-primary: #c6ac7c;
@@ -18,201 +16,92 @@
       --color-bg: #ffffff;
       --color-bg-alt: #f8f9fa;
       --color-error: #e74c3c;
-      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
       --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
       --radius-sm: 8px;
       --radius-md: 12px;
       --font-main: "Montserrat", sans-serif;
-      --transition: all 0.3s ease;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: var(--font-main);
-      background-color: transparent; /* Transparente para integrar no iframe */
-      color: var(--color-text);
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
-
-    .simulator-container {
-      width: 100%;
-      max-width: 800px;
-      margin: 10px auto;
-      background: var(--color-bg);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-lg);
-      overflow: hidden;
-      position: relative;
-      min-height: 600px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      padding: 24px;
-      text-align: center;
-      background-color: var(--color-text);
-      border-bottom: 2px solid var(--color-primary);
-    }
-
+    body { font-family: var(--font-main); background-color: transparent; color: var(--color-text); overflow-x: hidden; }
+    .simulator-container { width: 100%; max-width: 800px; margin: 10px auto; background: var(--color-bg); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); overflow: hidden; display: flex; flex-direction: column; }
+    header { padding: 24px; background-color: var(--color-text); border-bottom: 2px solid var(--color-primary); }
     .progress-container { height: 4px; background: #eee; width: 100%; }
-    .progress-bar {
-      height: 100%;
-      background: var(--color-primary);
-      width: 0%;
-      transition: width 0.5s ease;
-    }
-
-    .step-content {
-      padding: 40px;
-      flex: 1;
-      display: none;
-      animation: fadeIn 0.5s ease forwards;
-    }
+    .progress-bar { height: 100%; background: var(--color-primary); width: 0%; transition: width 0.5s ease; }
+    .step-content { padding: 40px; display: none; animation: fadeIn 0.4s ease forwards; }
     .step-content.active { display: block; }
-
-    .step-title {
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 32px;
-      text-align: center;
-      color: var(--color-text);
+    .step-title { font-size: 24px; font-weight: 600; margin-bottom: 32px; text-align: center; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Shake Animation para erros */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
     }
+    .error-shake { animation: shake 0.4s ease; }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-
-    .card {
-      background: white;
-      border: 1px solid #eee;
-      border-radius: var(--radius-sm);
-      padding: 32px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-md);
-      border-color: var(--color-primary);
-    }
-
-    .card-icon { font-size: 40px; margin-bottom: 16px; color: var(--color-primary); }
-    .card h3 { font-size: 18px; font-weight: 500; }
-
-    .form-group { margin-bottom: 20px; text-align: left; }
-    .form-group label {
-      display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--color-text-light);
-    }
-
-    .form-group input {
-      width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: var(--radius-sm);
-      font-size: 16px; font-family: var(--font-main); transition: var(--transition);
-    }
-
-    .form-group input:focus {
-      outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(198, 172, 124, 0.2);
-    }
-
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 32px; }
+    .card { background: white; border: 1px solid #eee; border-radius: var(--radius-sm); padding: 32px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+    .card:hover { border-color: var(--color-primary); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .card-icon { font-size: 40px; margin-bottom: 16px; }
+    .form-group { margin-bottom: 20px; position: relative; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .form-group input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: var(--radius-sm); font-size: 16px; transition: border-color 0.3s; }
+    .form-group input.input-error { border-color: var(--color-error); background-color: #fff8f8; }
+    
     .currency-input { position: relative; }
-    .currency-prefix {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      color: #999; font-weight: 600; pointer-events: none;
-    }
+    .currency-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #999; font-weight: 600; }
     .currency-input input { padding-left: 46px; }
-
-    .nav-buttons { display: flex; justify-content: space-between; margin-top: 32px; gap: 16px; }
-
-    .btn {
-      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-      color: #fff; border: none; padding: 14px 32px; border-radius: var(--radius-sm);
-      cursor: pointer; font-weight: 600; font-size: 16px; transition: var(--transition); flex: 1;
-    }
-
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(198, 172, 124, 0.3); }
-    .btn-outline { background: transparent; border: 2px solid #ddd; color: var(--color-text-light); }
-
-    .slider {
-      -webkit-appearance: none; width: 100%; height: 6px; border-radius: 4px; background: #eee; outline: none; margin: 20px 0;
-    }
-    .slider::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); cursor: pointer;
-    }
-
-    .slider-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-light); }
-
-    @media (max-width: 768px) {
-      .grid-2 { grid-template-columns: 1fr; gap: 0; }
-      .step-content { padding: 24px 20px; }
-    }
+    
+    .nav-buttons { display: flex; gap: 16px; margin-top: 32px; }
+    .btn { flex: 1; padding: 16px; border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%); color: white; font-size: 16px; }
+    .btn-outline { background: #f0f0f0; color: #666; }
+    
+    .slider { -webkit-appearance: none; width: 100%; height: 8px; background: #eee; border-radius: 5px; margin: 20px 0; }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: var(--color-primary); border-radius: 50%; cursor: pointer; box-shadow: 0 0 0 4px rgba(198, 172, 124, 0.2); }
+    
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .step-content { padding: 24px 20px; } }
   </style>
 </head>
-
 <body>
   <div class="simulator-container">
     <header><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div></header>
-
     <main id="simulatorMain">
       <div class="step-content active" id="step1">
         <h2 class="step-title">Qual é o seu objetivo?</h2>
         <div class="cards-grid">
-          <div class="card" onclick="selectObjective('adquirir')"><div class="card-icon">🏠</div><h3>Quero adquirir um imóvel</h3></div>
-          <div class="card" onclick="selectObjective('credito')"><div class="card-icon">💰</div><h3>Quero um crédito usando meu imóvel</h3></div>
+          <div class="card" onclick="selectObjective('adquirir')">🏠<br><h3>Comprar Imóvel</h3></div>
+          <div class="card" onclick="selectObjective('credito')">💰<br><h3>Crédito c/ Garantia</h3></div>
         </div>
       </div>
 
       <div class="step-content" id="step2">
-        <h2 class="step-title">Qual o perfil do imóvel?</h2>
+        <h2 class="step-title">Perfil do Imóvel</h2>
         <div class="cards-grid">
-          <div class="card" onclick="selectProperty('casa')"><div class="card-icon">🏡</div><h3>Casa</h3></div>
-          <div class="card" onclick="selectProperty('apartamento')"><div class="card-icon">🏢</div><h3>Apartamento</h3></div>
-          <div class="card" onclick="selectProperty('comercial')"><div class="card-icon">🏬</div><h3>Sala Comercial</h3></div>
-          <div class="card" onclick="selectProperty('outros')"><div class="card-icon">❓</div><h3>Outros</h3></div>
+          <div class="card" onclick="selectProperty('casa')">🏡<br>Casa</div>
+          <div class="card" onclick="selectProperty('apartamento')">🏢<br>Apto</div>
+          <div class="card" onclick="selectProperty('comercial')">🏬<br>Comercial</div>
+          <div class="card" onclick="selectProperty('outros')">❓<br>Outros</div>
         </div>
-        <div class="nav-buttons"><button class="btn btn-outline" onclick="prevStep()">Voltar</button></div>
+        <button class="btn btn-outline" onclick="prevStep()">Voltar</button>
       </div>
 
       <div class="step-content" id="step3">
-        <h2 class="step-title">Quais os valores da operação?</h2>
-        <div class="form-group">
+        <h2 class="step-title">Valores da Operação</h2>
+        <div class="form-group" id="containerPropertyValue">
           <label>Valor aproximado do imóvel</label>
           <div class="currency-input">
             <span class="currency-prefix">R$</span>
             <input type="text" id="propertyValue" inputmode="numeric" placeholder="0,00">
           </div>
-          <small id="propertyHelper" style="font-size: 12px; color: #999;">Mínimo de R$ 300.000,00</small>
+          <small id="propertyHelper" style="color:#999; font-size:12px; display:block; margin-top:5px;">O valor mínimo do imóvel deve ser R$ 300.000,00</small>
         </div>
 
-        <div id="creditSection" style="display: none; opacity: 0; transition: opacity 0.35s ease;">
-          <div class="form-group">
-            <label>Quanto você precisa de crédito?</label>
-            <input type="range" id="creditSlider" class="slider">
-            <div class="slider-labels">
-              <span id="sliderMin">R$ 100.000,00</span>
-              <span id="sliderMax">R$ 0,00</span>
-            </div>
-            <input type="text" id="creditValue" readonly style="margin-top: 16px; font-weight: bold; color: var(--color-primary); border:none; text-align:center; width:100%; font-size:20px; background:transparent;">
-          </div>
+        <div id="creditSection" style="display:none; margin-top:30px;">
+          <label style="font-weight:600; font-size:14px;">Quanto você precisa de crédito?</label>
+          <input type="range" id="creditSlider" class="slider">
+          <div id="creditValueDisplay" style="text-align:center; font-size:22px; font-weight:700; color:var(--color-primary);">R$ 0,00</div>
         </div>
 
         <div class="nav-buttons">
@@ -224,17 +113,17 @@
       <div class="step-content" id="step4">
         <h2 class="step-title">O imóvel tem matrícula / escritura?</h2>
         <div class="cards-grid">
-          <div class="card" onclick="selectLegal('sim')"><div class="card-icon">✅</div><h3>Sim, possui matrícula/escritura</h3></div>
-          <div class="card" onclick="selectLegal('nao')"><div class="card-icon">❌</div><h3>Não possui</h3></div>
+          <div class="card" onclick="selectLegal('sim')">✅ Sim, possui matrícula</div>
+          <div class="card" onclick="selectLegal('nao')">❌ Não possui</div>
         </div>
-        <div class="nav-buttons"><button class="btn btn-outline" onclick="prevStep()">Voltar</button></div>
+        <button class="btn btn-outline" onclick="prevStep()">Voltar</button>
       </div>
 
       <div class="step-content" id="step5">
-        <h2 class="step-title">Dados para a Simulação</h2>
+        <h2 class="step-title">Preencha seus dados para receber a simulação</h2>
         <div class="grid-2">
-          <div class="form-group"><label>Nome Completo</label><input type="text" id="clientName"></div>
-          <div class="form-group"><label>CPF</label><input type="text" id="clientCPF" placeholder="000.000.000-00"></div>
+            <div class="form-group"><label>Nome Completo</label><input type="text" id="clientName"></div>
+            <div class="form-group"><label>CPF</label><input type="text" id="clientCPF" placeholder="000.000.000-00"></div>
         </div>
         <div class="grid-2">
           <div class="form-group">
@@ -254,9 +143,9 @@
       </div>
 
       <div class="step-content" id="stepSuccess">
-        <div style="text-align: center; padding: 40px 20px;">
-          <div style="font-size: 64px; margin-bottom: 24px;">✨</div>
-          <h2 style="color: var(--color-primary); margin-bottom: 16px;">Solicitação Enviada!</h2>
+        <div style="text-align:center; padding: 40px 20px;">
+          <div style="font-size:60px; margin-bottom: 24px;">✨</div>
+          <h2 style="color:var(--color-primary); margin-bottom: 16px;">Solicitação Enviada!</h2>
           <p>Um especialista da <strong>Athena Assessoria</strong> entrará em contato em breve.</p>
         </div>
       </div>
@@ -264,20 +153,15 @@
   </div>
 
   <script>
-    const simulatorData = { objective: null, propertyType: null, propertyValue: 0, creditValue: 0, hasLegalDoc: null, clientData: {} };
+    const state = { objective:'', type:'', propertyVal:0, creditVal:0, legal:'', client:{} };
     let currentStep = 1;
 
-    // --- CORREÇÃO DA MÁSCARA MONETÁRIA ---
     function maskMoney(input) {
       let v = input.value.replace(/\D/g, "");
       if (v === "") return 0;
       let floatV = parseFloat(v) / 100;
       input.value = floatV.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       return floatV;
-    }
-
-    function formatBRL(val) {
-      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
     function sendHeight() {
@@ -287,108 +171,105 @@
     }
 
     function showStep(n) {
-      document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
       document.getElementById('step' + n).classList.add('active');
       document.getElementById('progressBar').style.width = ((n - 1) / 4) * 100 + '%';
       setTimeout(sendHeight, 100);
     }
 
-    function selectObjective(v) { simulatorData.objective = v; nextStep(); }
-    function selectProperty(v) { simulatorData.propertyType = v; nextStep(); }
-    function selectLegal(v) { simulatorData.hasLegalDoc = v; nextStep(); }
-
+    function selectObjective(v) { state.objective = v; nextStep(); }
+    function selectProperty(v) { state.type = v; nextStep(); }
+    function selectLegal(v) { state.legal = v; nextStep(); }
     function nextStep() { currentStep++; showStep(currentStep); }
     function prevStep() { currentStep--; showStep(currentStep); }
 
-    function handlePropertyInput(e) {
-      const val = maskMoney(e.target);
+    document.getElementById('propertyValue').addEventListener('input', (e) => {
+      const input = e.target;
+      const v = maskMoney(input);
       const section = document.getElementById('creditSection');
       const helper = document.getElementById('propertyHelper');
-      const slider = document.getElementById('creditSlider');
+      
+      // Limpa estado de erro ao digitar
+      input.classList.remove('input-error');
 
-      if (val >= 300000) {
+      if (v >= 300000) {
         section.style.display = 'block';
-        setTimeout(() => section.style.opacity = '1', 10);
         helper.style.color = 'green';
-        helper.innerText = "Valor válido.";
-        
-        const maxCredit = val * 0.6;
-        slider.min = 100000;
-        slider.max = maxCredit;
+        helper.innerText = "Valor aceito para simulação.";
+        const slider = document.getElementById('creditSlider');
+        slider.min = 100000; slider.max = v * 0.6;
         if (slider.value < 100000) slider.value = 100000;
-        document.getElementById('sliderMax').innerText = formatBRL(maxCredit);
-        updateCreditDisplay(slider.value);
-      } else {
-        section.style.display = 'none';
-        helper.style.color = 'var(--color-error)';
-        helper.innerText = "Mínimo R$ 300.000,00";
+        updateSlider(slider.value);
+      } else { 
+        section.style.display = 'none'; 
+        helper.style.color = '#999';
+        helper.innerText = "O valor mínimo do imóvel deve ser R$ 300.000,00";
       }
       sendHeight();
-    }
+    });
 
-    function updateCreditDisplay(v) {
-      document.getElementById('creditValue').value = formatBRL(parseFloat(v));
+    function updateSlider(v) {
+      document.getElementById('creditValueDisplay').innerText = parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      state.creditVal = v;
     }
+    document.getElementById('creditSlider').addEventListener('input', (e) => updateSlider(e.target.value));
 
+    // VALIDAÇÃO SEM POP-UP
     function validateStep3() {
-      const val = parseFloat(document.getElementById('propertyValue').value.replace(/\./g, '').replace(',', '.')) || 0;
-      if (val < 300000) return alert("Valor mínimo R$ 300.000,00");
-      simulatorData.propertyValue = val;
-      simulatorData.creditValue = parseFloat(document.getElementById('creditSlider').value);
+      const input = document.getElementById('propertyValue');
+      const container = document.getElementById('containerPropertyValue');
+      const helper = document.getElementById('propertyHelper');
+      const v = parseFloat(input.value.replace(/\./g, '').replace(',', '.')) || 0;
+
+      if (v < 300000) {
+        input.classList.add('input-error');
+        container.classList.add('error-shake');
+        helper.style.color = 'var(--color-error)';
+        helper.innerText = "Atenção: O valor mínimo do imóvel deve ser R$ 300.000,00";
+        
+        setTimeout(() => { container.classList.remove('error-shake'); }, 400);
+        return;
+      }
+
+      state.propertyVal = v; 
       nextStep();
     }
 
-    // --- MÁSCARAS DE DOCUMENTOS ---
-    function maskCPF(i) {
-      let v = i.value.replace(/\D/g, "");
-      v = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-      i.value = v.substring(0, 14);
-    }
-    function maskPhone(i) {
-      let v = i.value.replace(/\D/g, "");
-      v = v.replace(/^(\d{2})(\d)/g, "($1) $2").replace(/(\d{5})(\d)/, "$1-$2");
-      i.value = v.substring(0, 15);
-    }
-    function maskDate(i) {
-      let v = i.value.replace(/\D/g, "");
-      v = v.replace(/(\d{2})(\d)/, "$1/$2").replace(/(\d{2})(\d)/, "$1/$2");
-      i.value = v.substring(0, 10);
-    }
-    function maskCEP(i) {
-      let v = i.value.replace(/\D/g, "");
-      v = v.replace(/^(\d{5})(\d)/, "$1-$2");
-      i.value = v.substring(0, 9);
-    }
-
     function submitForm() {
-      const name = document.getElementById('clientName').value;
-      const phone = document.getElementById('clientPhone').value;
-      if (!name || !phone) return alert("Por favor, preencha Nome e WhatsApp.");
+      const inputs = ['clientName', 'clientPhone'];
+      let hasError = false;
 
-      simulatorData.clientData = {
-        name: name,
-        cpf: document.getElementById('clientCPF').value,
-        income: document.getElementById('clientIncome').value,
-        phone: phone,
-        dob: document.getElementById('clientDob').value,
-        cep: document.getElementById('clientCep').value
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+          el.classList.add('input-error');
+          hasError = true;
+        } else {
+          el.classList.remove('input-error');
+        }
+      });
+
+      if (hasError) return;
+
+      state.client = { 
+        name: document.getElementById('clientName').value, 
+        phone: document.getElementById('clientPhone').value, 
+        cpf: document.getElementById('clientCPF').value, 
+        income: document.getElementById('clientIncome').value
       };
-
-      window.parent.postMessage({ event: 'simulation_complete', ...simulatorData }, "*");
+      
+      window.parent.postMessage({ event: 'simulation_complete', ...state }, "*");
       showStep('Success');
-      document.getElementById('progressBar').style.width = '100%';
     }
 
-    window.onload = () => {
-      document.getElementById('propertyValue').addEventListener('input', handlePropertyInput);
-      document.getElementById('creditSlider').addEventListener('input', (e) => updateCreditDisplay(e.target.value));
-      document.getElementById('clientIncome').addEventListener('input', (e) => maskMoney(e.target));
-      document.getElementById('clientCPF').addEventListener('input', (e) => maskCPF(e.target));
-      document.getElementById('clientPhone').addEventListener('input', (e) => maskPhone(e.target));
-      document.getElementById('clientDob').addEventListener('input', (e) => maskDate(e.target));
-      document.getElementById('clientCep').addEventListener('input', (e) => maskCEP(e.target));
-      sendHeight();
-    };
+    // Máscaras de documentos
+    document.getElementById('clientIncome').addEventListener('input', (e) => maskMoney(e.target));
+    document.getElementById('clientCPF').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2").substring(0,14); });
+    document.getElementById('clientPhone').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/^(\d{2})(\d)/g,"($1) $2").replace(/(\d{5})(\d)/,"$1-$2").substring(0,15); });
+    document.getElementById('clientDob').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{2})(\d)/, "$1/$2").replace(/(\d{2})(\d)/, "$1/$2").substring(0,10); });
+    document.getElementById('clientCep').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/^(\d{5})(\d)/, "$1-$2").substring(0,9); });
+    
+    window.onload = sendHeight;
   </script>
 </body>
 </html>
