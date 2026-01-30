@@ -30,9 +30,8 @@
     .step-content { padding: 40px; display: none; animation: fadeIn 0.4s ease forwards; }
     .step-content.active { display: block; }
     .step-title { font-size: 24px; font-weight: 600; margin-bottom: 32px; text-align: center; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
-    /* Shake Animation para erros */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       25% { transform: translateX(-5px); }
@@ -44,13 +43,14 @@
     .card { background: white; border: 1px solid #eee; border-radius: var(--radius-sm); padding: 32px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
     .card:hover { border-color: var(--color-primary); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .card-icon { font-size: 40px; margin-bottom: 16px; }
+    
     .form-group { margin-bottom: 20px; position: relative; }
     .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
     .form-group input { width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: var(--radius-sm); font-size: 16px; transition: border-color 0.3s; }
     .form-group input.input-error { border-color: var(--color-error); background-color: #fff8f8; }
     
     .currency-input { position: relative; }
-    .currency-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #999; font-weight: 600; }
+    .currency-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #999; font-weight: 600; pointer-events: none; }
     .currency-input input { padding-left: 46px; }
     
     .nav-buttons { display: flex; gap: 16px; margin-top: 32px; }
@@ -58,8 +58,10 @@
     .btn-outline { background: #f0f0f0; color: #666; }
     
     .slider { -webkit-appearance: none; width: 100%; height: 8px; background: #eee; border-radius: 5px; margin: 20px 0; }
-    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: var(--color-primary); border-radius: 50%; cursor: pointer; box-shadow: 0 0 0 4px rgba(198, 172, 124, 0.2); }
+    .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--color-primary); cursor: pointer; box-shadow: 0 0 0 4px rgba(198, 172, 124, 0.2); }
     
+    .slider-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--color-text-light); margin-top: -10px; font-weight: 500; }
+
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .step-content { padding: 24px 20px; } }
   </style>
@@ -68,16 +70,23 @@
   <div class="simulator-container">
     <header><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div></header>
     <main id="simulatorMain">
+      
       <div class="step-content active" id="step1">
-        <h2 class="step-title">Qual é o seu objetivo?</h2>
+        <h2 class="step-title">Qual objetivo do crédito?</h2>
         <div class="cards-grid">
-          <div class="card" onclick="selectObjective('adquirir')">🏠<br><h3>Comprar Imóvel</h3></div>
-          <div class="card" onclick="selectObjective('credito')">💰<br><h3>Crédito c/ Garantia</h3></div>
+          <div class="card" onclick="selectObjective('adquirir')">
+            <div class="card-icon">🏠</div>
+            <h3>Quero adquirir um imóvel</h3>
+          </div>
+          <div class="card" onclick="selectObjective('credito')">
+            <div class="card-icon">💰</div>
+            <h3>Quero um crédito usando meu imóvel</h3>
+          </div>
         </div>
       </div>
 
       <div class="step-content" id="step2">
-        <h2 class="step-title">Perfil do Imóvel</h2>
+        <h2 class="step-title">Qual o Perfil do seu Imóvel:</h2>
         <div class="cards-grid">
           <div class="card" onclick="selectProperty('casa')">🏡<br>Casa</div>
           <div class="card" onclick="selectProperty('apartamento')">🏢<br>Apto</div>
@@ -88,7 +97,7 @@
       </div>
 
       <div class="step-content" id="step3">
-        <h2 class="step-title">Valores da Operação</h2>
+        <h2 class="step-title">Quais os valores da operação?</h2>
         <div class="form-group" id="containerPropertyValue">
           <label>Valor aproximado do imóvel</label>
           <div class="currency-input">
@@ -101,7 +110,11 @@
         <div id="creditSection" style="display:none; margin-top:30px;">
           <label style="font-weight:600; font-size:14px;">Quanto você precisa de crédito?</label>
           <input type="range" id="creditSlider" class="slider">
-          <div id="creditValueDisplay" style="text-align:center; font-size:22px; font-weight:700; color:var(--color-primary);">R$ 0,00</div>
+          <div class="slider-labels">
+            <span id="sliderMin">R$ 100.000,00</span>
+            <span id="sliderMax">R$ 0,00</span>
+          </div>
+          <input type="text" id="creditValue" readonly style="margin-top: 25px; font-weight: bold; color: var(--color-primary); border:none; text-align:center; width:100%; font-size:22px; background:transparent;">
         </div>
 
         <div class="nav-buttons">
@@ -164,6 +177,10 @@
       return floatV;
     }
 
+    function formatBRL(val) {
+      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
     function sendHeight() {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ height: document.body.scrollHeight }, "*");
@@ -188,17 +205,25 @@
       const v = maskMoney(input);
       const section = document.getElementById('creditSection');
       const helper = document.getElementById('propertyHelper');
+      const slider = document.getElementById('creditSlider');
+      const maxLabel = document.getElementById('sliderMax');
       
-      // Limpa estado de erro ao digitar
       input.classList.remove('input-error');
 
       if (v >= 300000) {
         section.style.display = 'block';
         helper.style.color = 'green';
         helper.innerText = "Valor aceito para simulação.";
-        const slider = document.getElementById('creditSlider');
-        slider.min = 100000; slider.max = v * 0.6;
-        if (slider.value < 100000) slider.value = 100000;
+        
+        const maxCredit = v * 0.6;
+        slider.min = 100000;
+        slider.max = maxCredit;
+        
+        maxLabel.innerText = formatBRL(maxCredit);
+        
+        if (parseFloat(slider.value) < 100000) slider.value = 100000;
+        if (parseFloat(slider.value) > maxCredit) slider.value = maxCredit;
+        
         updateSlider(slider.value);
       } else { 
         section.style.display = 'none'; 
@@ -209,60 +234,60 @@
     });
 
     function updateSlider(v) {
-      document.getElementById('creditValueDisplay').innerText = parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('creditValue').value = formatBRL(parseFloat(v));
       state.creditVal = v;
     }
     document.getElementById('creditSlider').addEventListener('input', (e) => updateSlider(e.target.value));
 
-    // VALIDAÇÃO SEM POP-UP
     function validateStep3() {
       const input = document.getElementById('propertyValue');
       const container = document.getElementById('containerPropertyValue');
       const helper = document.getElementById('propertyHelper');
       const v = parseFloat(input.value.replace(/\./g, '').replace(',', '.')) || 0;
-
       if (v < 300000) {
         input.classList.add('input-error');
         container.classList.add('error-shake');
         helper.style.color = 'var(--color-error)';
         helper.innerText = "Atenção: O valor mínimo do imóvel deve ser R$ 300.000,00";
-        
         setTimeout(() => { container.classList.remove('error-shake'); }, 400);
         return;
       }
-
       state.propertyVal = v; 
       nextStep();
     }
 
-    function submitForm() {
+    async function submitForm() {
       const inputs = ['clientName', 'clientPhone'];
       let hasError = false;
-
       inputs.forEach(id => {
         const el = document.getElementById(id);
-        if (!el.value.trim()) {
-          el.classList.add('input-error');
-          hasError = true;
-        } else {
-          el.classList.remove('input-error');
-        }
+        if (!el.value.trim()) { el.classList.add('input-error'); hasError = true; } else { el.classList.remove('input-error'); }
       });
-
       if (hasError) return;
 
       state.client = { 
         name: document.getElementById('clientName').value, 
         phone: document.getElementById('clientPhone').value, 
         cpf: document.getElementById('clientCPF').value, 
-        income: document.getElementById('clientIncome').value
+        income: document.getElementById('clientIncome').value,
+        dob: document.getElementById('clientDob').value,
+        cep: document.getElementById('clientCep').value
       };
-      
+
+      const webhookURL = 'https://hook.us1.make.com/21rfmrwzxf5h5wmqkj9odgibeyky1ww7';
+
+      try {
+        fetch(webhookURL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state)
+        });
+      } catch (e) { console.error(e); }
+
       window.parent.postMessage({ event: 'simulation_complete', ...state }, "*");
       showStep('Success');
     }
 
-    // Máscaras de documentos
     document.getElementById('clientIncome').addEventListener('input', (e) => maskMoney(e.target));
     document.getElementById('clientCPF').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2").substring(0,14); });
     document.getElementById('clientPhone').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/^(\d{2})(\d)/g,"($1) $2").replace(/(\d{5})(\d)/,"$1-$2").substring(0,15); });
