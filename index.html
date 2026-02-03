@@ -334,22 +334,25 @@
       showStep('Success');
     }
 
-    document.getElementById('clientIncome').addEventListener('input', (e) => maskMoney(e.target));
+   document.getElementById('clientIncome').addEventListener('input', (e) => maskMoney(e.target));
 
-    // CPF: trava em 11 dígitos e formata XXX.XXX.XXX-XX
-    document.getElementById('clientCPF').addEventListener('input', (e) => {
-      let digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-      let formatted = digits;
+// CPF: trava em 11 dígitos e formata 000.000.000-00 (sem gambiarra)
+document.getElementById('clientCPF').addEventListener('input', (e) => {
+  const el = e.target;
+  const digits = el.value.replace(/\D/g, '').slice(0, 11); // trava em 11
 
-      if (digits.length > 9) {
-        formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, '$1.$2.$3-$4');
-      } else if (digits.length > 6) {
-        formatted = digits.replace(/(\d{3})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
-      } else if (digits.length > 3) {
-        formatted = digits.replace(/(\d{3})(\d{0,3}).*/, '$1.$2');
-      }
-      e.target.value = formatted;
-    });
+  const p1 = digits.slice(0, 3);
+  const p2 = digits.slice(3, 6);
+  const p3 = digits.slice(6, 9);
+  const p4 = digits.slice(9, 11);
+
+  let out = p1;
+  if (p2) out += '.' + p2;
+  if (p3) out += '.' + p3;
+  if (p4) out += '-' + p4;
+
+  el.value = out;
+});
 
     document.getElementById('clientPhone').addEventListener('input', (e) => {
       e.target.value = e.target.value
