@@ -10,6 +10,7 @@
   j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','dataLayer','GTM-5MJDWDSZ');</script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -76,6 +77,7 @@
 <body>
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5MJDWDSZ"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
   <div class="simulator-container">
     <header><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div></header>
     <main id="simulatorMain">
@@ -143,21 +145,33 @@
 
       <div class="step-content" id="step5">
         <h2 class="step-title">Preencha seus dados para receber a simulação</h2>
+
         <div class="grid-2">
-            <div class="form-group"><label>Nome Completo</label><input type="text" id="clientName"></div>
-            <div class="form-group"><label>CPF</label><input type="text" id="clientCPF" placeholder="000.000.000-00"></div>
+          <div class="form-group"><label>Nome Completo</label><input type="text" id="clientName"></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="clientCPF" placeholder="000.000.000-00"></div>
         </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="clientEmail" placeholder="seuemail@empresa.com">
+          </div>
+          <div class="form-group"><label>Telefone (WhatsApp)</label><input type="text" id="clientPhone" placeholder="(00) 00000-0000"></div>
+        </div>
+
         <div class="grid-2">
           <div class="form-group">
             <label>Renda Familiar Mensal</label>
             <div class="currency-input"><span class="currency-prefix">R$</span><input type="text" id="clientIncome" inputmode="numeric" placeholder="0,00"></div>
           </div>
-          <div class="form-group"><label>Telefone (WhatsApp)</label><input type="text" id="clientPhone" placeholder="(00) 00000-0000"></div>
+          <div></div>
         </div>
+
         <div class="grid-2">
           <div class="form-group"><label>Data de Nascimento</label><input type="text" id="clientDob" placeholder="DD/MM/AAAA"></div>
           <div class="form-group"><label>CEP</label><input type="text" id="clientCep" placeholder="00000-000"></div>
         </div>
+
         <div class="nav-buttons">
           <button class="btn btn-outline" onclick="prevStep()">Voltar</button>
           <button class="btn" onclick="submitForm()">Solicitar Simulação</button>
@@ -260,16 +274,25 @@
     }
 
     async function submitForm() {
-      const inputs = ['clientName', 'clientPhone'];
+      const inputs = ['clientName', 'clientEmail', 'clientPhone'];
       let hasError = false;
+
       inputs.forEach(id => {
         const el = document.getElementById(id);
         if (!el.value.trim()) { el.classList.add('input-error'); hasError = true; } else { el.classList.remove('input-error'); }
       });
+
+      const emailEl = document.getElementById('clientEmail');
+      if (emailEl && emailEl.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim())) {
+        emailEl.classList.add('input-error');
+        hasError = true;
+      }
+
       if (hasError) return;
 
       state.client = { 
         name: document.getElementById('clientName').value, 
+        email: document.getElementById('clientEmail').value,
         phone: document.getElementById('clientPhone').value, 
         cpf: document.getElementById('clientCPF').value, 
         income: document.getElementById('clientIncome').value,
@@ -297,6 +320,7 @@
         'credit_value': state.creditVal,
         'has_legal_doc': state.legal,
         'client_name': state.client.name,
+        'client_email': state.client.email,
         'client_phone': state.client.phone,
         'client_cpf': state.client.cpf,
         'client_income': state.client.income,
@@ -311,11 +335,39 @@
     }
 
     document.getElementById('clientIncome').addEventListener('input', (e) => maskMoney(e.target));
-    document.getElementById('clientCPF').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2").substring(0,14); });
-    document.getElementById('clientPhone').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/^(\d{2})(\d)/g,"($1) $2").replace(/(\d{5})(\d)/,"$1-$2").substring(0,15); });
-    document.getElementById('clientDob').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{2})(\d)/, "$1/$2").replace(/(\d{2})(\d)/, "$1/$2").substring(0,10); });
-    document.getElementById('clientCep').addEventListener('input', (e) => { e.target.value = e.target.value.replace(/\D/g,"").replace(/^(\d{5})(\d)/, "$1-$2").substring(0,9); });
-    
+
+    document.getElementById('clientCPF').addEventListener('input', (e) => {
+      e.target.value = e.target.value
+        .replace(/\D/g,"")
+        .replace(/(\d{3})(\d)/,"$1.$2")
+        .replace(/(\d{3})(\d)/,"$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/,"$1-$2")
+        .substring(0,14);
+    });
+
+    document.getElementById('clientPhone').addEventListener('input', (e) => {
+      e.target.value = e.target.value
+        .replace(/\D/g,"")
+        .replace(/^(\d{2})(\d)/g,"($1) $2")
+        .replace(/(\d{5})(\d)/,"$1-$2")
+        .substring(0,15);
+    });
+
+    document.getElementById('clientDob').addEventListener('input', (e) => {
+      e.target.value = e.target.value
+        .replace(/\D/g,"")
+        .replace(/(\d{2})(\d)/, "$1/$2")
+        .replace(/(\d{2})(\d)/, "$1/$2")
+        .substring(0,10);
+    });
+
+    document.getElementById('clientCep').addEventListener('input', (e) => {
+      e.target.value = e.target.value
+        .replace(/\D/g,"")
+        .replace(/^(\d{5})(\d)/, "$1-$2")
+        .substring(0,9);
+    });
+
     window.onload = sendHeight;
   </script>
 </body>
