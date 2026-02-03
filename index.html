@@ -336,13 +336,19 @@
 
     document.getElementById('clientIncome').addEventListener('input', (e) => maskMoney(e.target));
 
+    // CPF: trava em 11 dígitos e formata XXX.XXX.XXX-XX
     document.getElementById('clientCPF').addEventListener('input', (e) => {
-      e.target.value = e.target.value
-        .replace(/\D/g,"")
-        .replace(/(\d{3})(\d)/,"$1.$2")
-        .replace(/(\d{3})(\d)/,"$1.$2")
-        .replace(/(\d{3})(\d{1,2})$/,"$1-$2")
-        .substring(0,14);
+      let digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+      let formatted = digits;
+
+      if (digits.length > 9) {
+        formatted = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, '$1.$2.$3-$4');
+      } else if (digits.length > 6) {
+        formatted = digits.replace(/(\d{3})(\d{3})(\d{0,3}).*/, '$1.$2.$3');
+      } else if (digits.length > 3) {
+        formatted = digits.replace(/(\d{3})(\d{0,3}).*/, '$1.$2');
+      }
+      e.target.value = formatted;
     });
 
     document.getElementById('clientPhone').addEventListener('input', (e) => {
